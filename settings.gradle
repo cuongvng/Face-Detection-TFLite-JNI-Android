@@ -1,2 +1,4 @@
 include ':app'
 rootProject.name = "FaceDetection"
+include ':opencv'
+project(':opencv').projectDir = new File(opencvsdk + '/sdk')
