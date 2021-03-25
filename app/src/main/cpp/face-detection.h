@@ -13,10 +13,10 @@
 
 class FaceDetector{
 private:
-    char* modelBuffer = nullptr;
-    long modelSize;
-    std::unique_ptr<tflite::FlatBufferModel> model;
-    std::unique_ptr<tflite::Interpreter> interpreter;
+    char* mModelBuffer = nullptr;
+    long mModelSize;
+    std::unique_ptr<tflite::FlatBufferModel> mModel;
+    std::unique_ptr<tflite::Interpreter> mInterpreter;
 
 public:
     FaceDetector(char* buffer, long size);

@@ -1,34 +1,32 @@
 #include "face-detection.h"
 
 FaceDetector::FaceDetector(char* buffer, long size) {
-    assert(modelSize>0);
-    modelSize = size;
-    modelBuffer = (char*) malloc(sizeof(char) * modelSize);
-    memcpy(modelBuffer, buffer, sizeof(char) * modelSize);
+    assert(mModelSize > 0);
+    mModelSize = size;
+    mModelBuffer = (char*) malloc(sizeof(char) * mModelSize);
+    memcpy(mModelBuffer, buffer, sizeof(char) * mModelSize);
     loadModel();
 }
 
 void FaceDetector::loadModel() {
 
-    model = tflite::FlatBufferModel::BuildFromBuffer(modelBuffer, sizeof(char) * modelSize);
-    assert(model != nullptr);
+    mModel = tflite::FlatBufferModel::BuildFromBuffer(mModelBuffer, sizeof(char) * mModelSize);
+    assert(mModel != nullptr);
 
     // Build the interpreter with the InterpreterBuilder.
     tflite::ops::builtin::BuiltinOpResolver resolver;
-    tflite::InterpreterBuilder builder(*model, resolver);
-    std::unique_ptr<tflite::Interpreter> interpreter;
-    builder(&interpreter);
-    assert(interpreter != nullptr);
+    tflite::InterpreterBuilder builder(*mModel, resolver);
+    builder(&mInterpreter);
+    assert(mInterpreter != nullptr);
 
     // Allocate tensor buffers.
-    assert(interpreter->AllocateTensors() == kTfLiteOk);
+    assert(mInterpreter->AllocateTensors() == kTfLiteOk);
 
-    // TODO: set input and output tensors
-}
+    // TODO: set input and output tensors}
 
 FaceDetector::~FaceDetector() {
-    if(modelBuffer != nullptr){
-        free(modelBuffer);
-        modelBuffer = nullptr;
+    if(mModelBuffer != nullptr){
+        free(mModelBuffer);
+        mModelBuffer = nullptr;
     }
 }
