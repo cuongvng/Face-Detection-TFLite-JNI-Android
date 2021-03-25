@@ -3,6 +3,7 @@ package cuongvng.facedetection;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 import android.util.Log;
@@ -21,8 +22,8 @@ import org.opencv.core.Mat;
 public class MainActivity extends Activity implements CvCameraViewListener2 {
     private static final String TAG = "MainActivity";
     private static final int CAMERA_PERMISSION_REQUEST = 1;
-    private static String MODEL_PATH = "../ml/centerface.tflite";
-
+    private final String MODEL_FILE = "centerface.tflite";
+    private long detectorPointer = 0L;
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -62,8 +63,8 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
 
         mOpenCvCameraView.setCvCameraViewListener(this);
 
-        // Load model & print interpreter state
-        loadModelJNI(MODEL_PATH);
+        // Load model
+        detectorPointer = loadModelJNI(this.getAssets(), MODEL_FILE);
     }
 
     @Override
@@ -128,5 +129,5 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
     }
 
 //    private native void adaptiveThresholdFromJNI(long mat);
-    private native void loadModelJNI(String filename);
+    private native long loadModelJNI(AssetManager assetManager, String filename);
 }
