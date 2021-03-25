@@ -1,3 +1,4 @@
 [submodule "app/src/main/cpp/tf-lite-api"]
 	path = app/src/main/cpp/tf-lite-api
 	url = https://github.com/cuongvng/TF-Lite-Cpp-API-for-Android
+	ignore = dirty
