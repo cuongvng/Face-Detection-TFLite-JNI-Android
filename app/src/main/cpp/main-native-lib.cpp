@@ -1,15 +1,13 @@
 #include <jni.h>
 #include <android/log.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <android/bitmap.h>
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include "face-detection.h"
 
 #define TAG "NativeLib"
 
-using namespace std;
-using namespace cv;
+void rotateMat(cv::Mat &matImage, int rotation);
 
 extern "C" {
 jlong JNICALL Java_cuongvng_facedetection_MainActivity_loadDetectorJNI(
@@ -37,4 +35,58 @@ jlong JNICALL Java_cuongvng_facedetection_MainActivity_loadDetectorJNI(
     free(buffer);
     return detectorPointer;
 }
+
+jfloatArray JNICALL Java_cuongvng_facedetection_MainActivity_detectJNI(
+        JNIEnv *env,
+        jobject instance,
+        jlong detectorPtr,
+        jbyteArray src,
+        jfloat heatmapThreshold,
+        jfloat nmsThreshold,
+        jint width, jint height, jint rotation) {
+
+    // Frame bytes to Mat
+    jbyte *yuv = env->GetByteArrayElements(src, 0);
+//    cv:: Mat my_yuv(height + height / 2, width, CV_8UC1, yuv); // TODO: quantization
+//    cv::Mat frame(height, width, CV_8UC4);
+    cv:: Mat my_yuv(height + height / 2, width, CV_32FC1, yuv);
+    cv::Mat frame(height, width, CV_32FC4);
+
+    cv::cvtColor(my_yuv, frame, cv::COLOR_YUV2BGRA_NV21);
+    rotateMat(frame, rotation);
+    // frame = frame(Rect(0, 0, frame.cols, frame.cols));
+    env->ReleaseByteArrayElements(src, yuv, 0);
+
+    FaceDetector* detector = (FaceDetector*) detectorPtr;
+
+    std::vector<FaceInfo> faces;
+    detector->detect(frame, faces, heatmapThreshold, nmsThreshold);
+
+    int resLen = faces.size()*N_FACE_FEATURES;
+    jfloat jfaces[resLen];
+    for (int i=0; i<faces.size(); i++){
+        jfaces[i * N_FACE_FEATURES] = faces[i].x1;
+        jfaces[i * N_FACE_FEATURES + 1] = faces[i].y1;
+        jfaces[i * N_FACE_FEATURES + 2] = faces[i].x2;
+        jfaces[i * N_FACE_FEATURES + 3] = faces[i].y2;
+        jfaces[i * N_FACE_FEATURES + 4] = faces[i].score;
+    }
+
+    jfloatArray detections = env->NewFloatArray(resLen);
+    env->SetFloatArrayRegion(detections, 0, resLen, jfaces);
+
+    return detections;
+}
+}
+
+void rotateMat(cv::Mat &matImage, int rotation) {
+    if (rotation == 90) {
+        transpose(matImage, matImage);
+        flip(matImage, matImage, 1); //transpose+flip(1)=CW
+    } else if (rotation == 270) {
+        transpose(matImage, matImage);
+        flip(matImage, matImage, 0); //transpose+flip(0)=CCW
+    } else if (rotation == 180) {
+        flip(matImage, matImage, -1);    //flip(-1)=180
+    }
 }
