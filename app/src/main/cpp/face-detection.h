@@ -52,17 +52,14 @@ public:
 
 private:
     void loadModel();
-
-    void nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,float nmsthreshold=0.3);
+    void dynamic_scale(float in_w, float in_h);
 
     template<typename T>
     void postProcess(T* heatmap, T* scale, T* offset,
                      std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold);
-    void dynamic_scale(float in_w, float in_h);
+    void nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,float nmsThreshold=0.3);
     std::vector<int> filterHeatmap(float *heatmap,int h, int w,float thresh);
     void getBox(std::vector<FaceInfo>& faces);
 };
-
-void printShape(TfLiteTensor* t);
 
 #endif //FACEDETECTION_FACE_DETECTION_H

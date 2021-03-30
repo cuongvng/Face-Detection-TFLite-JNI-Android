@@ -31,15 +31,6 @@ void FaceDetector::loadModel(){
     mOutputScale = mInterpreter->tensor(mInterpreter->outputs()[2]);
     mOutputOffset = mInterpreter->tensor(mInterpreter->outputs()[1]);
 
-	printf("mInputTensor size: ");
-	printShape(mInputTensor);
-	printf("mOutputHeatmap size: ");
-	printShape(mOutputHeatmap);
-	printf("mOutputScale size: ");
-	printShape(mOutputScale);
-	printf("mOutputOffset size: ");
-	printShape(mOutputOffset);
-
 	printf("\nLoaded model successfully\n\n");
 }
 
@@ -48,17 +39,13 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatm
 
 	image_h = img.rows;
 	image_w = img.cols;
-	printf("image_h: %d  image_w: %d\n", image_h, image_w);
 	scale_w = (float)image_w / (float)d_w;
 	scale_h = (float)image_h / (float)d_h;
-
-	printf("scale_w: %f  scale_h: %f\n", scale_w, scale_h);
 
     // Read image into `mInputTensor`
     if (mModelQuantized){
 		// Copy image into input tensor
 		cv::Mat inputBlob = cv::dnn::blobFromImage(img, 1.0, cv::Size(d_w, d_h), cv::Scalar(0, 0, 0), true, CV_8U);
-		std::cout << "inputBlob.size: " << inputBlob.size << std::endl;
 
 		memcpy(mInputTensor->data.uint8, inputBlob.data,
 			   sizeof(uchar) * inputBlob.size[1] * inputBlob.size[2] * inputBlob.size[3]);
@@ -67,13 +54,10 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatm
 
     else {
 		cv::Mat inputBlob = cv::dnn::blobFromImage(img, 1.0, cv::Size(d_w, d_h), cv::Scalar(0, 0, 0), true, CV_32F);
-		std::cout << "inputBlob.size: " << inputBlob.size << std::endl;
 
 		memcpy(tflite::GetTensorData<float>(mInputTensor), inputBlob.data,
 			   sizeof(float) * inputBlob.size[1] * inputBlob.size[2] * inputBlob.size[3]);
 		}
-		printf("mInputTensor size: ");
-		printShape(mInputTensor);
 
 		assert(mInputTensor->type == kTfLiteFloat32);
     // Inference
@@ -81,9 +65,6 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatm
 		printf("Error invoking detection model");
 		return;
 	}
-
-	std::cout << "mOutputHeatmap: " << mOutputHeatmap->bytes << " bytes, with size: " ;
-	printShape(mOutputHeatmap);
 
 	if (mModelQuantized){
 		// decode<uint8_t>(
@@ -115,17 +96,9 @@ void FaceDetector::postProcess(
 	int heatmap_width = OUTPUT_WIDTH/4;
 	int spacial_size = heatmap_height * heatmap_width;
 
-	printf("heatmap_height: %d   heatmap_width: %d   spacial_size: %d\n", heatmap_height, heatmap_width, spacial_size);
-	// T* heatmap_ = heatmap->data.f;  // TODO: do for quatized model
-	printf("heatmap: %f\n", *heatmap);
-
+	// TODO: do for quatized model
 	T* scale1 = scale + spacial_size;
-	printf("scale0: %f\n", *scale);
-	printf("scale1: %f\n", *scale1);
-
 	T* offset1 = offset + spacial_size;
-	printf("offset0: %f\n", *offset);
-	printf("offset1: %f\n", *offset1);
 
 	std::vector<int> heatmap_ids = filterHeatmap(heatmap, heatmap_height, heatmap_width, heatmapThreshold);
 
@@ -155,9 +128,6 @@ void FaceDetector::postProcess(
         facebox.y2 = y2;
         facebox.score = heatmap[index];
 
-        float box_w = x2 - x1;
-        float box_h = y2 - y1;
-
         faces_tmp.push_back(facebox);
 	}
 
@@ -172,7 +142,7 @@ void FaceDetector::postProcess(
 
 }
 
-void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output, float nmsthreshold)
+void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output, float nmsThreshold)
 {
 	std::sort(input.begin(), input.end(),
 		[](const FaceInfo& a, const FaceInfo& b)
@@ -196,16 +166,15 @@ void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& outp
 
 		float area0 = h0 * w0;
 
-
 		for (int j = i + 1; j < box_num; j++)
 		{
 			if (merged[j])
 				continue;
 
-			float inner_x0 = input[i].x1 > input[j].x1 ? input[i].x1 : input[j].x1;//std::max(input[i].x1, input[j].x1);
+			float inner_x0 = input[i].x1 > input[j].x1 ? input[i].x1 : input[j].x1;
 			float inner_y0 = input[i].y1 > input[j].y1 ? input[i].y1 : input[j].y1;
 
-			float inner_x1 = input[i].x2 < input[j].x2 ? input[i].x2 : input[j].x2;  //bug fixed ,sorry
+			float inner_x1 = input[i].x2 < input[j].x2 ? input[i].x2 : input[j].x2;
 			float inner_y1 = input[i].y2 < input[j].y2 ? input[i].y2 : input[j].y2;
 
 			float inner_h = inner_y1 - inner_y0 + 1;
@@ -226,7 +195,7 @@ void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& outp
 
 			score = inner_area / (area0 + area1 - inner_area);
 
-			if (score > nmsthreshold)
+			if (score > nmsThreshold)
 				merged[j] = 1;
 		}
 
@@ -260,7 +229,7 @@ std::vector<int> FaceDetector::filterHeatmap(float *heatmap, int  h, int w, floa
 
 void FaceDetector::getBox(std::vector<FaceInfo>& faces)
 {
-	float w=0, h=0, maxSize=0;
+	float w = 0, h = 0, maxSize = 0;
 	float cenx, ceny;
 	for (int i = 0; i < faces.size(); i++){
 		w = faces[i].x2 - faces[i].x1;
@@ -270,10 +239,10 @@ void FaceDetector::getBox(std::vector<FaceInfo>& faces)
 		cenx = faces[i].x1 + w / 2;
 		ceny = faces[i].y1 + h / 2;
 
-		faces[i].x1 = std::max(cenx - maxSize / 2, 0.f);                 // cenx - maxSize / 2 > 0 ? cenx - maxSize / 2 : 0;
-		faces[i].y1 = std::max(ceny - maxSize / 2, 0.f);                     //ceny - maxSize / 2 > 0 ? ceny - maxSize / 2 : 0;
-		faces[i].x2 = std::min(cenx + maxSize / 2, image_w - 1.f);  // cenx + maxSize / 2 > image_w - 1 ? image_w - 1 : cenx + maxSize / 2;
-		faces[i].y2 = std::min(ceny + maxSize / 2, image_h - 1.f); //ceny + maxSize / 2 > image_h-1 ? image_h - 1 : ceny + maxSize / 2;
+		faces[i].x1 = std::max(cenx - maxSize / 2, 0.f);
+		faces[i].y1 = std::max(ceny - maxSize / 2, 0.f);
+		faces[i].x2 = std::min(cenx + maxSize / 2, image_w - 1.f);
+		faces[i].y2 = std::min(ceny + maxSize / 2, image_h - 1.f);
 	}
 }
 
@@ -282,11 +251,4 @@ FaceDetector::~FaceDetector(){
         free(mModelBuffer);
         mModelBuffer = nullptr;
     }
-}
-
-void printShape(TfLiteTensor* t){
-	for (int i=0; i< t->dims->size; i++){
-		std::cout << t->dims->data[i] << "  ";
-	}
-	std::cout << std::endl;
 }
