@@ -22,7 +22,7 @@ import org.opencv.core.Mat;
 public class MainActivity extends Activity implements CvCameraViewListener2 {
     private static final String TAG = "MainActivity";
     private static final int CAMERA_PERMISSION_REQUEST = 1;
-    private final String MODEL_FILE = "centerface.tflite";
+    private final String MODEL_FILE = "centerface_w640_h480.tflite";
     private long detectorPointer = 0L;
     private CameraBridgeViewBase mOpenCvCameraView;
 
@@ -64,7 +64,7 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         // Load model
-        detectorPointer = loadModelJNI(this.getAssets(), MODEL_FILE);
+        detectorPointer = loadDetectorJNI(this.getAssets(), MODEL_FILE);
     }
 
     @Override
@@ -129,5 +129,5 @@ public class MainActivity extends Activity implements CvCameraViewListener2 {
     }
 
 //    private native void adaptiveThresholdFromJNI(long mat);
-    private native long loadModelJNI(AssetManager assetManager, String filename);
+    private native long loadDetectorJNI(AssetManager assetManager, String filename);
 }
