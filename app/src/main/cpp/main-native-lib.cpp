@@ -47,12 +47,13 @@ jfloatArray JNICALL Java_cuongvng_facedetection_MainActivity_detectJNI(
 
     // Frame bytes to Mat
     jbyte *yuv = env->GetByteArrayElements(src, 0);
-//    cv:: Mat my_yuv(height + height / 2, width, CV_8UC1, yuv); // TODO: quantization
-//    cv::Mat frame(height, width, CV_8UC4);
-    cv:: Mat my_yuv(height + height / 2, width, CV_32FC1, yuv);
-    cv::Mat frame(height, width, CV_32FC4);
+    cv::Mat my_yuv(height + height / 2, width, CV_8UC1, yuv); // TODO: quantization?
+    cv::Mat frame(height, width, CV_8UC4);
+//    cv::Mat my_yuv(height + height / 2, width, CV_32F, yuv);
+//    cv::Mat frame(height, width, CV_32F);
 
     cv::cvtColor(my_yuv, frame, cv::COLOR_YUV2BGRA_NV21);
+
     rotateMat(frame, rotation);
     // frame = frame(Rect(0, 0, frame.cols, frame.cols));
     env->ReleaseByteArrayElements(src, yuv, 0);
