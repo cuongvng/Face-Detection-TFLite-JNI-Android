@@ -1,32 +1,20 @@
 package cuongvng.facedetection;
 
 import android.Manifest;
-import android.app.Activity;
 import android.graphics.*;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
-import androidx.lifecycle.LifecycleOwner;
+import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
-import android.widget.Toast;
 
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-
-//import com.google.flatbuffers.kotlin.ByteArrayKt;
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.frame.Frame;
 
-public class MainActivity extends Activity{
+public class MainActivity extends AppCompatActivity{
     private static final String TAG = "MainActivity";
     private static final int CAMERA_PERMISSION_REQUEST = 1;
 
@@ -40,8 +28,8 @@ public class MainActivity extends Activity{
     private int frameHeight = 0;
     private int rotationToUser = 0;
     private Paint _paint = new Paint();
-    private SurfaceView surfaceView = new SurfaceView(this);
-    private CameraView cameraView = new CameraView(this);
+    private SurfaceView surfaceView;
+    private CameraView cameraView;
 
 //    private CameraBridgeViewBase mOpenCvCameraView;
 
@@ -82,7 +70,7 @@ public class MainActivity extends Activity{
         cameraView = this.findViewById(R.id.camera);
         surfaceView = this.findViewById(R.id.surfaceView);
 
-        cameraView.setLifecycleOwner((LifecycleOwner) this);
+        cameraView.setLifecycleOwner(this);
         cameraView.addFrameProcessor(frame -> {detectFaceNative(frame);});
 
         // init the paint for drawing the detections
