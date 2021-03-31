@@ -93,36 +93,61 @@ void FaceDetector::postProcess(
 
 	std::vector<int> heatmap_ids = filterHeatmap(heatmap, heatmap_height, heatmap_width, heatmapThreshold);
 
-	std::vector<FaceInfo> faces_tmp;
-	for (int i = 0; i < heatmap_ids.size()/2; i++){
-        int id_h = heatmap_ids[2*i];
-        int id_w = heatmap_ids[2*i+1];
-        int index = id_h*heatmap_width + id_w;
+    int id_h = heatmap_ids[0];
+    int id_w = heatmap_ids[1];
+    int index = id_h*heatmap_width + id_w;
+    float s0 = std::exp(scale[index]) * 4;
+    float s1= std::exp(scale1[index]) * 4;
+    float o0 = offset[index];
+    float o1= offset1[index];
 
-        float s0 = std::exp(scale[index]) * 4;
-        float s1= std::exp(scale1[index]) * 4;
-        float o0 = offset[index];
-        float o1= offset1[index];
+    float x1 = std::max(0.0, (id_w + o1 + 0.5) * 4 - s1 / 2);
+    float y1 = std::max(0.0, (id_h + o0 + 0.5) * 4 - s0 / 2);
+    float x2 = 0, y2 = 0;
+    x1 = std::min(x1, (float)d_w);
+    y1= std::min(y1, (float)d_h);
+    x2= std::min(x1 + s1, (float)d_w);
+    y2= std::min(y1 + s0, (float)d_h);
 
-        float x1 = std::max(0.0, (id_w + o1 + 0.5) * 4 - s1 / 2);
-        float y1 = std::max(0.0, (id_h + o0 + 0.5) * 4 - s0 / 2);
-        float x2 = 0, y2 = 0;
-        x1 = std::min(x1, (float)d_w);
-        y1= std::min(y1, (float)d_h);
-        x2= std::min(x1 + s1, (float)d_w);
-        y2= std::min(y1 + s0, (float)d_h);
+    FaceInfo facebox;
+    facebox.x1 = x1;
+    facebox.y1 = y1;
+    facebox.x2 = x2;
+    facebox.y2 = y2;
+    facebox.score = heatmap[index];
 
-        FaceInfo facebox;
-        facebox.x1 = x1;
-        facebox.y1 = y1;
-        facebox.x2 = x2;
-        facebox.y2 = y2;
-        facebox.score = heatmap[index];
+    faces.push_back(facebox);
 
-        faces_tmp.push_back(facebox);
-	}
-
-	nms(faces_tmp, faces, nmsThreshold);
+//	std::vector<FaceInfo> faces_tmp;
+//	for (int i = 0; i < 1 /*heatmap_ids.size()/2*/; i++){
+//        int id_h = heatmap_ids[2*i];
+//        int id_w = heatmap_ids[2*i+1];
+//        int index = id_h*heatmap_width + id_w;
+////        float hm =  (hm)
+//        float s0 = std::exp(scale[index]) * 4;
+//        float s1= std::exp(scale1[index]) * 4;
+//        float o0 = offset[index];
+//        float o1= offset1[index];
+//
+//        float x1 = std::max(0.0, (id_w + o1 + 0.5) * 4 - s1 / 2);
+//        float y1 = std::max(0.0, (id_h + o0 + 0.5) * 4 - s0 / 2);
+//        float x2 = 0, y2 = 0;
+//        x1 = std::min(x1, (float)d_w);
+//        y1= std::min(y1, (float)d_h);
+//        x2= std::min(x1 + s1, (float)d_w);
+//        y2= std::min(y1 + s0, (float)d_h);
+//
+//        FaceInfo facebox;
+//        facebox.x1 = x1;
+//        facebox.y1 = y1;
+//        facebox.x2 = x2;
+//        facebox.y2 = y2;
+//        facebox.score = heatmap[index];
+//
+//        faces_tmp.push_back(facebox);
+//	}
+//
+//	nms(faces_tmp, faces, nmsThreshold);
 
 	for (int k=0; k<faces.size(); k++){
 		faces[k].x1 *=d_scale_w*scale_w;
