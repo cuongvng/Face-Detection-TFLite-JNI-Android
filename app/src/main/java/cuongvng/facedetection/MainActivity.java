@@ -31,6 +31,9 @@ public class MainActivity extends AppCompatActivity{
     private Paint _paint = new Paint();
     private SurfaceView surfaceView;
     private CameraView cameraView;
+    private boolean surfaceLocked = false;
+    private Canvas canvas = null;
+    private Path path = new Path();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,6 +62,7 @@ public class MainActivity extends AppCompatActivity{
         // init the paint for drawing the detections
         _paint.setColor(Color.RED);
         _paint.setStyle(Paint.Style.STROKE);
+//        _paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST));
         _paint.setStrokeWidth(10f);
 
         // Set the detections drawings surface transparent
@@ -91,23 +95,32 @@ public class MainActivity extends AppCompatActivity{
         double fps = 1000.0/elapsed;
         Log.i(TAG, String.format("FPS: %f", fps));
 
-        if (detections.length == 0){
-            return;
+        if (!surfaceLocked){
+            canvas = surfaceView.getHolder().lockCanvas();
+            if (detections.length==0){ // erase boxes
+                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
+                surfaceView.getHolder().unlockCanvasAndPost(canvas);
+            }
+            else {
+                surfaceLocked = true;
+                path.rewind();
+            }
         }
 
-        Canvas canvas = surfaceView.getHolder().lockCanvas();
-        if (canvas != null) {
+        if (canvas != null && surfaceLocked) {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
             // Draw the detections, // TODO: limit number of detections
-            this.drawDetection(canvas, rotationToUser, detections, 0);
-            this.drawDetection(canvas, rotationToUser, detections, 1);
-            this.drawDetection(canvas, rotationToUser, detections, 2);
+            this.drawDetection(canvas, path, rotationToUser, detections, 0);
+            this.drawDetection(canvas, path, rotationToUser, detections, 1);
+            this.drawDetection(canvas, path, rotationToUser, detections, 2);
             surfaceView.getHolder().unlockCanvasAndPost(canvas);
-//            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            surfaceLocked = false;
         }
+
+
     }
 
-    private void drawDetection(Canvas canvas, int rotation, float[] detections, int idx){
+    private void drawDetection(Canvas canvas, Path p, int rotation, float[] detections, int idx){
         // Frame dimensions
         int w;
         int h;
@@ -130,7 +143,6 @@ public class MainActivity extends AppCompatActivity{
         float x2 = xOffset + detections[idx*nFaceInfo + 2] * scaleX;
         float y2 = yOffset + detections[idx*nFaceInfo + 3] * scaleY;
 
-        Path p = new Path();
         p.moveTo(x1, y1);
         p.lineTo(x1, y2);
         p.lineTo(x2, y2);
@@ -138,7 +150,6 @@ public class MainActivity extends AppCompatActivity{
         p.lineTo(x1, y1);
 
         canvas.drawPath(p, _paint);
-//        p.reset();
     }
     private native long loadDetectorJNI(AssetManager assetManager, String filename);
     private native float[] detectJNI(long detectorPtr, byte[] src,
