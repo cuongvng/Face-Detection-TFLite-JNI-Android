@@ -91,6 +91,10 @@ public class MainActivity extends AppCompatActivity{
         double fps = 1000.0/elapsed;
         Log.i(TAG, String.format("FPS: %f", fps));
 
+        if (detections.length == 0){
+            return;
+        }
+
         Canvas canvas = surfaceView.getHolder().lockCanvas();
         if (canvas != null) {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
@@ -99,6 +103,7 @@ public class MainActivity extends AppCompatActivity{
             this.drawDetection(canvas, rotationToUser, detections, 1);
             this.drawDetection(canvas, rotationToUser, detections, 2);
             surfaceView.getHolder().unlockCanvasAndPost(canvas);
+//            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         }
     }
 
@@ -133,6 +138,7 @@ public class MainActivity extends AppCompatActivity{
         p.lineTo(x1, y1);
 
         canvas.drawPath(p, _paint);
+//        p.reset();
     }
     private native long loadDetectorJNI(AssetManager assetManager, String filename);
     private native float[] detectJNI(long detectorPtr, byte[] src,
