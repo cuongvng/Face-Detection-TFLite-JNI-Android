@@ -5,7 +5,6 @@ FaceDetector::FaceDetector(char* buffer, long size, bool quantized){
     mModelSize = size;
     mModelBuffer = (char*) malloc(sizeof(char) * mModelSize);
     memcpy(mModelBuffer, buffer, sizeof(char) * mModelSize);
-	printf("Loading model ... \n");
     loadModel();
 	dynamic_scale(OUTPUT_WIDTH, OUTPUT_HEIGHT);
 }
@@ -30,13 +29,9 @@ void FaceDetector::loadModel(){
     mOutputHeatmap = mInterpreter->tensor(mInterpreter->outputs()[3]);
     mOutputScale = mInterpreter->tensor(mInterpreter->outputs()[2]);
     mOutputOffset = mInterpreter->tensor(mInterpreter->outputs()[1]);
-
-	printf("\nLoaded model successfully\n\n");
 }
 
 void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold){
-	printf("Detecting ...\n");
-
 	image_h = img.rows;
 	image_w = img.cols;
 	scale_w = (float)image_w / (float)d_w;
@@ -62,7 +57,6 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatm
 		assert(mInputTensor->type == kTfLiteFloat32);
     // Inference
 	if (mInterpreter->Invoke() != kTfLiteOk){
-		printf("Error invoking detection model");
 		return;
 	}
 
@@ -76,9 +70,6 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatm
 	}
 	else{
 		postProcess<float>(
-			// mOutputHeatmap->data.f,
-			// mOutputScale->data.f,
-			// mOutputOffset->data.f,
 			tflite::GetTensorData<float>(mOutputHeatmap),
 			tflite::GetTensorData<float>(mOutputScale),
 			tflite::GetTensorData<float>(mOutputOffset),
