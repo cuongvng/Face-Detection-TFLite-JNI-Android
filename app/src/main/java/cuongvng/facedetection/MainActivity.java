@@ -4,6 +4,7 @@ import android.Manifest;
 import android.graphics.*;
 import android.content.res.AssetManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -67,7 +68,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void detectFaceNative(Frame frame){
-        final long start = System.currentTimeMillis();
+        final long start = SystemClock.elapsedRealtime();
         if (detectorPointer == 0L){
             detectorPointer = loadDetectorJNI(this.getAssets(), MODEL_FILE);
         }
@@ -86,8 +87,9 @@ public class MainActivity extends AppCompatActivity{
                 rotationToUser
                 );
 
-        final long elapsed = System.currentTimeMillis() - start;
-        Log.i(TAG, "Detection elapsed time: ${elapsed}ms");
+        long elapsed = SystemClock.elapsedRealtime() - start;
+        double fps = 1000.0/elapsed;
+        Log.i(TAG, String.format("FPS: %f", fps));
 
         Canvas canvas = surfaceView.getHolder().lockCanvas();
         if (canvas != null) {
