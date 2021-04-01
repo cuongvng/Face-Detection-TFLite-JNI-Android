@@ -50,7 +50,8 @@ private:
 public:
     FaceDetector(char* buffer, long size, bool quantized=false);
     ~FaceDetector();
-    void detect(cv::Mat img, std::vector<FaceInfo>& faces, float scoreThresh, float nmsThresh);
+    void detect(cv::Mat img, std::vector<FaceInfo>& faces,
+            float scoreThresh, float nmsThresh, int maxFaces);
 
 private:
     void loadModel();
@@ -58,8 +59,10 @@ private:
 
     template<typename T>
     void postProcess(T* heatmap, T* scale, T* offset,
-                     std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold);
-    void nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,float nmsThreshold=0.3);
+                     std::vector<FaceInfo>& faces,
+                     float heatmapThreshold, float nmsThreshold, int maxFaces);
+    void nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,
+            float nmsThreshold, int maxFaces);
     std::vector<int> filterHeatmap(float *heatmap,int h, int w,float thresh);
     void getBox(std::vector<FaceInfo>& faces);
 };

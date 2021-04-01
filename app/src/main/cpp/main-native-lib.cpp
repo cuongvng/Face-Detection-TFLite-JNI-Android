@@ -43,6 +43,7 @@ jfloatArray JNICALL Java_cuongvng_facedetection_MainActivity_detectJNI(
         jbyteArray src,
         jfloat heatmapThreshold,
         jfloat nmsThreshold,
+        jint maxFaces,
         jint width, jint height, jint rotation) {
 
     // Frame bytes to Mat
@@ -61,7 +62,7 @@ jfloatArray JNICALL Java_cuongvng_facedetection_MainActivity_detectJNI(
     FaceDetector* detector = (FaceDetector*) detectorPtr;
 
     std::vector<FaceInfo> faces;
-    detector->detect(frame, faces, heatmapThreshold, nmsThreshold);
+    detector->detect(frame, faces, heatmapThreshold, nmsThreshold, maxFaces);
 
     int resLen = faces.size()*N_FACE_FEATURES;
     jfloat jfaces[resLen];

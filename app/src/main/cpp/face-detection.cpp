@@ -31,7 +31,8 @@ void FaceDetector::loadModel(){
     mOutputOffset = mInterpreter->tensor(mInterpreter->outputs()[1]);
 }
 
-void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold){
+void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces,
+		float heatmapThreshold, float nmsThreshold, int maxFaces){
 	image_h = img.rows;
 	image_w = img.cols;
 	scale_w = (float)image_w / (float)d_w;
@@ -73,7 +74,7 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatm
 			tflite::GetTensorData<float>(mOutputHeatmap),
 			tflite::GetTensorData<float>(mOutputScale),
 			tflite::GetTensorData<float>(mOutputOffset),
-			faces, heatmapThreshold, nmsThreshold);
+			faces, heatmapThreshold, nmsThreshold, maxFaces);
 	}
 	getBox(faces);
 }
@@ -81,96 +82,60 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces, float heatm
 template<typename T>
 void FaceDetector::postProcess(
         T* heatmap, T* scale, T* offset,
-        std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold){
+        std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold, int maxFaces){
 
 	int heatmap_height = OUTPUT_HEIGHT/4;
 	int heatmap_width = OUTPUT_WIDTH/4;
 	int spacial_size = heatmap_height * heatmap_width;
 
-	// TODO: do for quatized model
+	// TODO: do for quantized model
 	T* scale1 = scale + spacial_size;
 	T* offset1 = offset + spacial_size;
 
 	std::vector<int> heatmap_ids = filterHeatmap(heatmap, heatmap_height, heatmap_width, heatmapThreshold);
 
-    int id_h = heatmap_ids[0];
-    int id_w = heatmap_ids[1];
-    int index = id_h*heatmap_width + id_w;
-    float s0 = std::exp(scale[index]) * 4;
-    float s1= std::exp(scale1[index]) * 4;
-    float o0 = offset[index];
-    float o1= offset1[index];
+	std::vector<FaceInfo> faces_tmp;
+	for (int i = 0; i < heatmap_ids.size()/2; i++){
+        int id_h = heatmap_ids[2*i];
+        int id_w = heatmap_ids[2*i+1];
+        int index = id_h*heatmap_width + id_w;
 
-    float x1 = std::max(0.0, (id_w + o1 + 0.5) * 4 - s1 / 2);
-    float y1 = std::max(0.0, (id_h + o0 + 0.5) * 4 - s0 / 2);
-    float x2 = 0, y2 = 0;
-    x1 = std::min(x1, (float)d_w);
-    y1= std::min(y1, (float)d_h);
-    x2= std::min(x1 + s1, (float)d_w);
-    y2= std::min(y1 + s0, (float)d_h);
+        float s0 = std::exp(scale[index]) * 4;
+        float s1= std::exp(scale1[index]) * 4;
+        float o0 = offset[index];
+        float o1= offset1[index];
 
-    FaceInfo facebox;
-    facebox.x1 = x1;
-    facebox.y1 = y1;
-    facebox.x2 = x2;
-    facebox.y2 = y2;
-    facebox.score = heatmap[index];
+        float x1 = std::max(0.0, (id_w + o1 + 0.5) * 4 - s1 / 2);
+        float y1 = std::max(0.0, (id_h + o0 + 0.5) * 4 - s0 / 2);
+        float x2 = 0, y2 = 0;
+        x1 = std::min(x1, (float)d_w);
+        y1= std::min(y1, (float)d_h);
+        x2= std::min(x1 + s1, (float)d_w);
+        y2= std::min(y1 + s0, (float)d_h);
 
-    faces.push_back(facebox);
+        FaceInfo facebox;
+        facebox.x1 = x1*d_scale_w*scale_w;
+        facebox.y1 = y1*d_scale_h*scale_h;
+        facebox.x2 = x2*d_scale_w*scale_w;
+        facebox.y2 = y2*d_scale_h*scale_h;
+        facebox.score = heatmap[index];
 
-//	std::vector<FaceInfo> faces_tmp;
-//	for (int i = 0; i < 1 /*heatmap_ids.size()/2*/; i++){
-//        int id_h = heatmap_ids[2*i];
-//        int id_w = heatmap_ids[2*i+1];
-//        int index = id_h*heatmap_width + id_w;
-////        float hm =  (hm)
-//        float s0 = std::exp(scale[index]) * 4;
-//        float s1= std::exp(scale1[index]) * 4;
-//        float o0 = offset[index];
-//        float o1= offset1[index];
-//
-//        float x1 = std::max(0.0, (id_w + o1 + 0.5) * 4 - s1 / 2);
-//        float y1 = std::max(0.0, (id_h + o0 + 0.5) * 4 - s0 / 2);
-//        float x2 = 0, y2 = 0;
-//        x1 = std::min(x1, (float)d_w);
-//        y1= std::min(y1, (float)d_h);
-//        x2= std::min(x1 + s1, (float)d_w);
-//        y2= std::min(y1 + s0, (float)d_h);
-//
-//        FaceInfo facebox;
-//        facebox.x1 = x1;
-//        facebox.y1 = y1;
-//        facebox.x2 = x2;
-//        facebox.y2 = y2;
-//        facebox.score = heatmap[index];
-//
-//        faces_tmp.push_back(facebox);
-//	}
-//
-//	nms(faces_tmp, faces, nmsThreshold);
-
-	for (int k=0; k<faces.size(); k++){
-		faces[k].x1 *=d_scale_w*scale_w;
-		faces[k].y1 *=d_scale_h*scale_h;
-		faces[k].x2 *= d_scale_w*scale_w;
-		faces[k].y2 *=d_scale_h*scale_h;
+        faces_tmp.push_back(facebox);
 	}
-
+	nms(faces_tmp, faces, nmsThreshold, maxFaces);
 }
 
-void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output, float nmsThreshold)
-{
+void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,
+		float nmsThreshold, int maxFaces){
+
 	std::sort(input.begin(), input.end(),
-		[](const FaceInfo& a, const FaceInfo& b)
-	{
-		return a.score > b.score;
-	});
+		[](const FaceInfo& a, const FaceInfo& b){return a.score > b.score;});
 
 	int box_num = input.size();
 
 	std::vector<int> merged(box_num, 0);
 
-	for (int i = 0; i < box_num; i++)
+	for (int i = 0; i < box_num && output.size() < maxFaces; i++)
 	{
 		if (merged[i])
 			continue;
@@ -196,7 +161,6 @@ void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& outp
 			float inner_h = inner_y1 - inner_y0 + 1;
 			float inner_w = inner_x1 - inner_x0 + 1;
 
-
 			if (inner_h <= 0 || inner_w <= 0)
 				continue;
 
@@ -204,22 +168,17 @@ void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& outp
 
 			float h1 = input[j].y2 - input[j].y1 + 1;
 			float w1 = input[j].x2 - input[j].x1 + 1;
-
 			float area1 = h1 * w1;
 
-			float score;
-
-			score = inner_area / (area0 + area1 - inner_area);
-
-			if (score > nmsThreshold)
+			float iou = inner_area / (area0 + area1 - inner_area);
+			if (iou > nmsThreshold)
 				merged[j] = 1;
 		}
 
 	}
 }
 
-void FaceDetector::dynamic_scale(float in_w, float in_h)
-{
+void FaceDetector::dynamic_scale(float in_w, float in_h){
 	d_h = (int)(std::ceil(in_h / 32) * 32);
 	d_w = (int)(std::ceil(in_w / 32) * 32);
 
@@ -227,14 +186,12 @@ void FaceDetector::dynamic_scale(float in_w, float in_h)
 	d_scale_w = in_w/d_w ;
 }
 
-std::vector<int> FaceDetector::filterHeatmap(float *heatmap, int  h, int w, float thresh)
-{
+std::vector<int> FaceDetector::filterHeatmap(float *heatmap, int  h, int w, float thresh){
 	// TODO: modify `thresh` for quantized model
 	std::vector<int> heatmap_ids;
 	for (int i = 0; i < h; i++){
 		for (int j = 0; j < w; j++){
 			if (heatmap[i*w + j] > thresh){
-				std::array<int, 2> id = { i,j };
 				heatmap_ids.push_back(i);
 				heatmap_ids.push_back(j);
 			}
@@ -243,8 +200,7 @@ std::vector<int> FaceDetector::filterHeatmap(float *heatmap, int  h, int w, floa
 	return heatmap_ids;
 }
 
-void FaceDetector::getBox(std::vector<FaceInfo>& faces)
-{
+void FaceDetector::getBox(std::vector<FaceInfo>& faces){
 	float w = 0, h = 0, maxSize = 0;
 	float cenx, ceny;
 	for (int i = 0; i < faces.size(); i++){

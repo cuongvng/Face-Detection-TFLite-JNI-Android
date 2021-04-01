@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity{
     private float heatmapThreshold = (float) 0.5;
     private float nmsThreshold = (float) 0.3;
     private final int nFaceInfo = 5;
+    private final int maxFaces = 1;
 
     private int frameWidth = 0;
     private int frameHeight = 0;
@@ -62,7 +63,6 @@ public class MainActivity extends AppCompatActivity{
         // init the paint for drawing the detections
         _paint.setColor(Color.RED);
         _paint.setStyle(Paint.Style.STROKE);
-//        _paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST));
         _paint.setStrokeWidth(10f);
 
         // Set the detections drawings surface transparent
@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity{
                 frame.getData(),
                 heatmapThreshold,
                 nmsThreshold,
+                maxFaces,
                 frameWidth,
                 frameHeight,
                 rotationToUser
@@ -110,14 +111,11 @@ public class MainActivity extends AppCompatActivity{
         if (canvas != null && surfaceLocked) {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
             // Draw the detections, // TODO: limit number of detections
-            this.drawDetection(canvas, path, rotationToUser, detections, 0);
-            this.drawDetection(canvas, path, rotationToUser, detections, 1);
-            this.drawDetection(canvas, path, rotationToUser, detections, 2);
+            for (byte i=0; i<maxFaces; i++)
+                this.drawDetection(canvas, path, rotationToUser, detections, i);
             surfaceView.getHolder().unlockCanvasAndPost(canvas);
             surfaceLocked = false;
         }
-
-
     }
 
     private void drawDetection(Canvas canvas, Path p, int rotation, float[] detections, int idx){
@@ -153,6 +151,6 @@ public class MainActivity extends AppCompatActivity{
     }
     private native long loadDetectorJNI(AssetManager assetManager, String filename);
     private native float[] detectJNI(long detectorPtr, byte[] src,
-                                     float heatmapThreshold, float nmsThreshold,
+                                     float heatmapThreshold, float nmsThreshold, int maxFaces,
                                      int width, int heith, int rotation);
 }
