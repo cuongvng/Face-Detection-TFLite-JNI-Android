@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity{
 
         if (canvas != null && surfaceLocked) {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
-            // Draw the detections, // TODO: limit number of detections
             for (byte i=0; i<maxFaces; i++)
                 this.drawDetection(canvas, path, rotationToUser, detections, i);
             surfaceView.getHolder().unlockCanvasAndPost(canvas);
