@@ -109,9 +109,9 @@ void FaceDetector::postProcess(
         float y1 = std::max(0.0, (id_h + o0 + 0.5) * 4 - s0 / 2);
         float x2 = 0, y2 = 0;
         x1 = std::min(x1, (float)d_w);
-        y1= std::min(y1, (float)d_h);
-        x2= std::min(x1 + s1, (float)d_w);
-        y2= std::min(y1 + s0, (float)d_h);
+        y1 = std::min(y1, (float)d_h);
+        x2 = std::min(x1 + s1, (float)d_w);
+        y2 = std::min(y1 + s0, (float)d_h);
 
         FaceInfo facebox;
         facebox.x1 = x1*d_scale_w*scale_w;
@@ -187,7 +187,6 @@ void FaceDetector::dynamic_scale(float in_w, float in_h){
 }
 
 std::vector<int> FaceDetector::filterHeatmap(float *heatmap, int  h, int w, float thresh){
-	// TODO: modify `thresh` for quantized model
 	std::vector<int> heatmap_ids;
 	for (int i = 0; i < h; i++){
 		for (int j = 0; j < w; j++){
