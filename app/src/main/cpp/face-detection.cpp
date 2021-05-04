@@ -32,7 +32,7 @@ void FaceDetector::loadModel(){
 }
 
 void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces,
-		float heatmapThreshold, float nmsThreshold, int maxFaces){
+		float heatmapThreshold, float nmsThreshold){
 	image_h = img.rows;
 	image_w = img.cols;
 	scale_w = (float)image_w / (float)d_w;
@@ -56,13 +56,13 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces,
 		tflite::GetTensorData<float>(mOutputHeatmap),
 		tflite::GetTensorData<float>(mOutputScale),
 		tflite::GetTensorData<float>(mOutputOffset),
-		faces, heatmapThreshold, nmsThreshold, maxFaces);
+		faces, heatmapThreshold, nmsThreshold);
 	getBox(faces);
 }
 
 void FaceDetector::postProcess(
         float* heatmap, float* scale, float* offset,
-        std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold, int maxFaces){
+        std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold){
 
 	int heatmap_height = OUTPUT_HEIGHT/4;
 	int heatmap_width = OUTPUT_WIDTH/4;
@@ -101,11 +101,11 @@ void FaceDetector::postProcess(
 
         faces_tmp.push_back(facebox);
 	}
-	nms(faces_tmp, faces, nmsThreshold, maxFaces);
+	nms(faces_tmp, faces, nmsThreshold);
 }
 
 void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,
-		float nmsThreshold, int maxFaces){
+		float nmsThreshold){
 
 	std::sort(input.begin(), input.end(),
 		[](const FaceInfo& a, const FaceInfo& b){return a.score > b.score;});
@@ -114,7 +114,7 @@ void FaceDetector::nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& outp
 
 	std::vector<int> merged(box_num, 0);
 
-	for (int i = 0; i < box_num && output.size() < maxFaces; i++)
+	for (int i = 0; i < box_num; i++)
 	{
 		if (merged[i])
 			continue;

@@ -43,7 +43,6 @@ jfloatArray JNICALL Java_cuongvng_facedetection_MainActivity_detectJNI(
         jbyteArray src,
         jfloat heatmapThreshold,
         jfloat nmsThreshold,
-        jint maxFaces,
         jint width, jint height, jint rotation) {
 
     // Frame bytes to Mat
@@ -59,16 +58,16 @@ jfloatArray JNICALL Java_cuongvng_facedetection_MainActivity_detectJNI(
     FaceDetector* detector = (FaceDetector*) detectorPtr;
 
     std::vector<FaceInfo> faces;
-    detector->detect(frame, faces, heatmapThreshold, nmsThreshold, maxFaces);
+    detector->detect(frame, faces, heatmapThreshold, nmsThreshold);
 
-    int resLen = faces.size()*maxFaces;
+    int resLen = faces.size()*N_FACE_ATTB;
     jfloat jfaces[resLen];
     for (int i=0; i<faces.size(); i++){
-        jfaces[i * maxFaces] = faces[i].x1;
-        jfaces[i * maxFaces + 1] = faces[i].y1;
-        jfaces[i * maxFaces + 2] = faces[i].x2;
-        jfaces[i * maxFaces + 3] = faces[i].y2;
-        jfaces[i * maxFaces + 4] = faces[i].score;
+        jfaces[i * N_FACE_ATTB] = faces[i].x1;
+        jfaces[i * N_FACE_ATTB + 1] = faces[i].y1;
+        jfaces[i * N_FACE_ATTB + 2] = faces[i].x2;
+        jfaces[i * N_FACE_ATTB + 3] = faces[i].y2;
+        jfaces[i * N_FACE_ATTB + 4] = faces[i].score;
     }
 
     jfloatArray detections = env->NewFloatArray(resLen);

@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity{
     private float heatmapThreshold = (float) 0.5;
     private float nmsThreshold = (float) 0.3;
     private final int nFaceInfo = 5;
-    private final int maxFaces = 5;
 
     private int frameWidth = 0;
     private int frameHeight = 0;
@@ -86,7 +85,6 @@ public class MainActivity extends AppCompatActivity{
                 frame.getData(),
                 heatmapThreshold,
                 nmsThreshold,
-                maxFaces,
                 frameWidth,
                 frameHeight,
                 rotationToUser
@@ -110,7 +108,7 @@ public class MainActivity extends AppCompatActivity{
 
         if (canvas != null && surfaceLocked) {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
-            for (byte i=0; i<maxFaces; i++)
+            for (byte i=0; i<detections.length/nFaceInfo; i++)
                 this.drawDetection(canvas, path, rotationToUser, detections, i);
             surfaceView.getHolder().unlockCanvasAndPost(canvas);
             surfaceLocked = false;
@@ -150,6 +148,6 @@ public class MainActivity extends AppCompatActivity{
     }
     private native long loadDetectorJNI(AssetManager assetManager, String filename);
     private native float[] detectJNI(long detectorPtr, byte[] src,
-                                     float heatmapThreshold, float nmsThreshold, int maxFaces,
+                                     float heatmapThreshold, float nmsThreshold,
                                      int width, int heith, int rotation);
 }

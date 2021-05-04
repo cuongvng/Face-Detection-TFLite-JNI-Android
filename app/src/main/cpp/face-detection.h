@@ -14,6 +14,8 @@
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/optional_debug_tools.h"
 
+enum{N_FACE_ATTB=5}; // number of attributes of the following struct:
+
 struct FaceInfo{
     float x1;
     float y1;
@@ -49,16 +51,16 @@ public:
     FaceDetector(char* buffer, long size, bool quantized=false);
     ~FaceDetector();
     void detect(cv::Mat img, std::vector<FaceInfo>& faces,
-            float scoreThresh, float nmsThresh, int maxFaces);
+            float scoreThresh, float nmsThresh);
 
 private:
     void loadModel();
     void dynamic_scale(float in_w, float in_h);
     void postProcess(float* heatmap, float* scale, float* offset,
                      std::vector<FaceInfo>& faces,
-                     float heatmapThreshold, float nmsThreshold, int maxFaces);
+                     float heatmapThreshold, float nmsThreshold);
     void nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,
-            float nmsThreshold, int maxFaces);
+            float nmsThreshold);
     std::vector<int> filterHeatmap(float* heatmap, int h, int w, float thresh);
     void getBox(std::vector<FaceInfo>& faces);
 };
