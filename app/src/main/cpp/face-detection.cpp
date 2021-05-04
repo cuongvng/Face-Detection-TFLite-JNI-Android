@@ -39,58 +39,37 @@ void FaceDetector::detect(cv::Mat img, std::vector<FaceInfo>& faces,
 	scale_h = (float)image_h / (float)d_h;
 
     // Read image into `mInputTensor`
-    if (mModelQuantized){
-		// Copy image into input tensor
-		cv::Mat inputBlob = cv::dnn::blobFromImage(img, 1.0, cv::Size(d_w, d_h), cv::Scalar(0, 0, 0), true, CV_8U);
+	cv::Mat inputBlob = cv::dnn::blobFromImage(img, 1.0, cv::Size(d_w, d_h),
+											cv::Scalar(0, 0, 0),
+											true, CV_32F);
 
-		memcpy(mInputTensor->data.uint8, inputBlob.data,
-			   sizeof(uchar) * inputBlob.size[1] * inputBlob.size[2] * inputBlob.size[3]);
-		assert(mInputTensor->type == kTfLiteUInt8);
-	}
+	memcpy(tflite::GetTensorData<float>(mInputTensor), inputBlob.data,
+		   sizeof(float) * inputBlob.size[1] * inputBlob.size[2] * inputBlob.size[3]);
+	assert(mInputTensor->type == kTfLiteFloat32);
 
-    else {
-		cv::Mat inputBlob = cv::dnn::blobFromImage(img, 1.0, cv::Size(d_w, d_h), cv::Scalar(0, 0, 0), true, CV_32F);
-
-		memcpy(tflite::GetTensorData<float>(mInputTensor), inputBlob.data,
-			   sizeof(float) * inputBlob.size[1] * inputBlob.size[2] * inputBlob.size[3]);
-		}
-
-		assert(mInputTensor->type == kTfLiteFloat32);
     // Inference
 	if (mInterpreter->Invoke() != kTfLiteOk){
 		return;
 	}
 
-	if (mModelQuantized){
-		// decode<uint8_t>(
-		// 	tflite::GetTensorData<uint8_t>(mOutputHeatmap),
-		// 	tflite::GetTensorData<uint8_t>(mOutputScale),
-		// 	tflite::GetTensorData<uint8_t>(mOutputOffset),
-		// 	tflite::GetTensorData<uint8_t>(mOutputLandmarks),
-		// 	faces, heatmapThreshold, nmsThreshold);
-	}
-	else{
-		postProcess<float>(
-			tflite::GetTensorData<float>(mOutputHeatmap),
-			tflite::GetTensorData<float>(mOutputScale),
-			tflite::GetTensorData<float>(mOutputOffset),
-			faces, heatmapThreshold, nmsThreshold, maxFaces);
-	}
+	postProcess(
+		tflite::GetTensorData<float>(mOutputHeatmap),
+		tflite::GetTensorData<float>(mOutputScale),
+		tflite::GetTensorData<float>(mOutputOffset),
+		faces, heatmapThreshold, nmsThreshold, maxFaces);
 	getBox(faces);
 }
 
-template<typename T>
 void FaceDetector::postProcess(
-        T* heatmap, T* scale, T* offset,
+        float* heatmap, float* scale, float* offset,
         std::vector<FaceInfo>& faces, float heatmapThreshold, float nmsThreshold, int maxFaces){
 
 	int heatmap_height = OUTPUT_HEIGHT/4;
 	int heatmap_width = OUTPUT_WIDTH/4;
 	int spacial_size = heatmap_height * heatmap_width;
 
-	// TODO: do for quantized model
-	T* scale1 = scale + spacial_size;
-	T* offset1 = offset + spacial_size;
+	float* scale1 = scale + spacial_size;
+	float* offset1 = offset + spacial_size;
 
 	std::vector<int> heatmap_ids = filterHeatmap(heatmap, heatmap_height, heatmap_width, heatmapThreshold);
 
@@ -186,7 +165,7 @@ void FaceDetector::dynamic_scale(float in_w, float in_h){
 	d_scale_w = in_w/d_w ;
 }
 
-std::vector<int> FaceDetector::filterHeatmap(float *heatmap, int  h, int w, float thresh){
+std::vector<int> FaceDetector::filterHeatmap(float* heatmap, int  h, int w, float thresh){
 	std::vector<int> heatmap_ids;
 	for (int i = 0; i < h; i++){
 		for (int j = 0; j < w; j++){

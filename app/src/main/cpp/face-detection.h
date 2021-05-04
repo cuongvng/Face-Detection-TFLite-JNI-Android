@@ -56,14 +56,12 @@ public:
 private:
     void loadModel();
     void dynamic_scale(float in_w, float in_h);
-
-    template<typename T>
-    void postProcess(T* heatmap, T* scale, T* offset,
+    void postProcess(float* heatmap, float* scale, float* offset,
                      std::vector<FaceInfo>& faces,
                      float heatmapThreshold, float nmsThreshold, int maxFaces);
     void nms(std::vector<FaceInfo>& input, std::vector<FaceInfo>& output,
             float nmsThreshold, int maxFaces);
-    std::vector<int> filterHeatmap(float *heatmap,int h, int w,float thresh);
+    std::vector<int> filterHeatmap(float* heatmap, int h, int w, float thresh);
     void getBox(std::vector<FaceInfo>& faces);
 };
 
