@@ -46,4 +46,4 @@ The original ONNX model was converted to TF Lite format (converting flow: ONNX -
 - `app/src/main/java/cuongvng/facedetection/MainActivity.java`: High-level Android file, capturing frames from camera, call core functions via JNI.
 
 ## Results:
-![Example](./app/src/test/result.png)
+<img src="./app/src/test/result.png" width="400">
