@@ -61,14 +61,14 @@ jfloatArray JNICALL Java_cuongvng_facedetection_MainActivity_detectJNI(
     std::vector<FaceInfo> faces;
     detector->detect(frame, faces, heatmapThreshold, nmsThreshold, maxFaces);
 
-    int resLen = faces.size()*N_FACE_FEATURES;
+    int resLen = faces.size()*maxFaces;
     jfloat jfaces[resLen];
     for (int i=0; i<faces.size(); i++){
-        jfaces[i * N_FACE_FEATURES] = faces[i].x1;
-        jfaces[i * N_FACE_FEATURES + 1] = faces[i].y1;
-        jfaces[i * N_FACE_FEATURES + 2] = faces[i].x2;
-        jfaces[i * N_FACE_FEATURES + 3] = faces[i].y2;
-        jfaces[i * N_FACE_FEATURES + 4] = faces[i].score;
+        jfaces[i * maxFaces] = faces[i].x1;
+        jfaces[i * maxFaces + 1] = faces[i].y1;
+        jfaces[i * maxFaces + 2] = faces[i].x2;
+        jfaces[i * maxFaces + 3] = faces[i].y2;
+        jfaces[i * maxFaces + 4] = faces[i].score;
     }
 
     jfloatArray detections = env->NewFloatArray(resLen);

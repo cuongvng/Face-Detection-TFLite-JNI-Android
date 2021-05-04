@@ -14,8 +14,6 @@
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/optional_debug_tools.h"
 
-enum{N_FACE_FEATURES=5}; // Number of element in struct FaceInfo
-
 struct FaceInfo{
     float x1;
     float y1;

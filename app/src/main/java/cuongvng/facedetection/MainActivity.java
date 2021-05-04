@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity{
     private float heatmapThreshold = (float) 0.5;
     private float nmsThreshold = (float) 0.3;
     private final int nFaceInfo = 5;
-    private final int maxFaces = 1;
+    private final int maxFaces = 5;
 
     private int frameWidth = 0;
     private int frameHeight = 0;
